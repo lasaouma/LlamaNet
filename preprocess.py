@@ -49,4 +49,5 @@ def read_preprocessed_data(read_file):
     read_file = open(read_file, 'r')
     for line in read_file:
         lines += [line[:-1].split(' ')]
+    read_file.close()
     return lines 
