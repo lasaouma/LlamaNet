@@ -3,6 +3,15 @@ import numpy as np
 import os
 
 
+def write_pickle(ID_word, word_ID):
+    if not os.path.exists("./vocab"):
+        os.makedirs("./vocab")
+    with open("./vocab/wordID.pkl", "wb") as f:
+        pickle.dump(word_ID, f)
+    with open("./vocab/IDWord.pkl", "wb") as f:
+        pickle.dump(ID_word, f)
+
+
 def preprocess_data(read_file, write_file=None, vocab_size=20000, line_len=30):
     # read lines and construct vocabulary
     vocab = dict()
@@ -35,12 +44,7 @@ def preprocess_data(read_file, write_file=None, vocab_size=20000, line_len=30):
     ID_word = dict(zip(word_ID.values(), word_ID.keys()))  # reverse dict to get word from ID
 
     # write to pickle
-    if not os.path.exists("./vocab"):
-        os.makedirs("./vocab")
-    with open("./vocab/wordID.pkl", "wb") as f:
-        pickle.dump(word_ID, f)
-    with open("./vocab/IDWord.pkl", "wb") as f:
-        pickle.dump(ID_word, f)
+    write_pickle(ID_word, word_ID)
 
     known_words.extend(["<eos>", "<bos>", "<pad>"])
 
