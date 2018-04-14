@@ -2,7 +2,7 @@ import pickle
 import numpy as np
 import os
 
-def write_pickle(id_word, word_id):
+def write_vocab(id_word, word_id):
     if not os.path.exists("./vocab"):
         os.makedirs("./vocab")
     with open("./vocab/WordID.pkl", "wb") as f:
@@ -10,7 +10,7 @@ def write_pickle(id_word, word_id):
     with open("./vocab/IDWord.pkl", "wb") as f:
         pickle.dump(id_word, f)
 
-def load_pickle():
+def load_vocab():
     with open('./vocab/IDWord.pkl', 'rb') as IDWord_file:
         id_word = pickle.load(IDWord_file)
     with open('./vocab/WordID.pkl', 'rb') as WordID_file:
@@ -50,7 +50,7 @@ def preprocess_data(read_file, write_file="./data/sentences.preprocess", vocab_s
     id_word = dict(zip(word_id.values(), word_id.keys()))  # reverse dict to get word from ID
 
     # write to pickle
-    write_pickle(id_word, word_id)
+    write_vocab(id_word, word_id)
 
     known_words.extend(["<eos>", "<bos>", "<pad>"])
 
@@ -84,7 +84,7 @@ def preprocess_data(read_file, write_file="./data/sentences.preprocess", vocab_s
     return lines_np
 
 def preprocess_continuation(continuation_path='./data/sentences.continuation', sentence_lenght=20):
-    word_id, id_word = load_pickle()
+    word_id, id_word = load_vocab()
     vocab = list(word_id.keys())
 
     continuation = []
@@ -104,7 +104,7 @@ def preprocess_continuation(continuation_path='./data/sentences.continuation', s
     return np.array(continuation)
 
 # read data from preprocessed file written by preprocess_data
-def read_preprocessed_data(read_file="./data/sentences.preprocess"):
+def load_preprocessed_data(read_file="./data/sentences.preprocess"):
     lines = []
     read_file = open(read_file, 'r')
     for line in read_file:
