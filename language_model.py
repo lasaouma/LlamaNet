@@ -2,14 +2,14 @@ import tensorflow as tf
 import numpy as np
 
 #parameters
-vocab_size = 6
-time_steps = 2
-hidden_size = 2
-batch_size = 32
-learning_rate = 0.001
+vocab_size = 100
+time_steps = 10
+hidden_size = 32
+batch_size = 64
+learning_rate = 0.0001
 input_n = time_steps
 output_n = vocab_size
-embedding_size = 3
+embedding_size = 16
 n_train_steps = 50000
 
 class Batcher: #TODO
@@ -38,21 +38,21 @@ with tf.variable_scope("rnn"):
     rnn = tf.contrib.rnn.BasicLSTMCell(num_units=hidden_size)
     initial_state = state = tf.nn.rnn_cell.LSTMStateTuple(tf.zeros([batch_size, hidden_size]), tf.zeros([batch_size, hidden_size])) 
     output_weights = tf.random_uniform([hidden_size, vocab_size], -1.0, 1.0)
+    output_bias = tf.random_uniform([vocab_size], -1.0, 1.0)
 
     output_list = []
     prediction_list = []
     embedded_inputs_unstacked = tf.unstack(embedded_inputs, axis=1)
     for embedded_input in embedded_inputs_unstacked:
         _, state = rnn(embedded_input, state)
-        output = tf.matmul(state.h, output_weights)
+        output = tf.matmul(state.h, output_weights) + output_bias
         output_list += [output]
         prediction_list += [tf.argmax(output,axis=1)]
-
     outputs = tf.stack(output_list, axis=1)
     predictions = tf.stack(prediction_list, axis=1)
 
 with tf.variable_scope("optimizer"):
-    loss = tf.nn.softmax_cross_entropy_with_logits_v2(logits=outputs[:,:-1,:], labels=targets_one_hot[:,:1,:]) #correct?
+    loss = tf.nn.softmax_cross_entropy_with_logits_v2(logits=outputs[:,:-1,:], labels=targets_one_hot[:,1:,:]) #correct?
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
 
 sess = tf.Session()
@@ -65,11 +65,9 @@ def train(x, y):
 def predict(x):
     return sess.run(predictions, feed_dict={inputs: x})
 
-
-
 #DRIVER
 #generate dummy data and vocab
-data = [i for i in range(input_n)]
+data = [i % vocab_size for i in range(input_n)]
 vocab = dict()
 for i in range(vocab_size):
     vocab[i] = str(i)
@@ -88,6 +86,6 @@ writer = tf.summary.FileWriter("./log", sess.graph)
 writer.close()
 
 #test
-predicted = predict(np.reshape([data]*batch_size, [batch_size, input_n]))
-for i in range(input_n-1): 
-    print(predicted[:,i], data[i+1])
+#predicted = predict(np.reshape([data]*batch_size, [batch_size, input_n]))
+#for i in range(input_n-1): 
+#    print(predicted[:,i], data[i+1])
