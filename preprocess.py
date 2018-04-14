@@ -2,25 +2,23 @@ import pickle
 import numpy as np
 import os
 
-
-def write_pickle(ID_word, word_ID):
+def write_pickle(id_word, word_id):
     if not os.path.exists("./vocab"):
         os.makedirs("./vocab")
     with open("./vocab/WordID.pkl", "wb") as f:
-        pickle.dump(word_ID, f)
+        pickle.dump(word_id, f)
     with open("./vocab/IDWord.pkl", "wb") as f:
-        pickle.dump(ID_word, f)
+        pickle.dump(id_word, f)
 
 def load_pickle():
     with open('./vocab/IDWord.pkl', 'rb') as IDWord_file:
-        ID_word = pickle.load(IDWord_file)
+        id_word = pickle.load(IDWord_file)
     with open('./vocab/WordID.pkl', 'rb') as WordID_file:
-        word_ID = pickle.load(WordID_file)
+        word_id = pickle.load(WordID_file)
 
-    return word_ID, ID_word
+    return word_id, id_word
 
-
-def preprocess_data(read_file, write_file=None, vocab_size=20000, line_len=30):
+def preprocess_data(read_file, write_file="./data/sentences.preprocess", vocab_size=20000, line_len=30):
     # read lines and construct vocabulary
     vocab = dict()
     lines = []
@@ -43,16 +41,16 @@ def preprocess_data(read_file, write_file=None, vocab_size=20000, line_len=30):
             known_words += [word]
 
     # build dictonary of word to IDs
-    word_ID = {word: i for i, word in enumerate(known_words, 4)}
-    word_ID["<unk>"] = 0
-    word_ID["<eos>"] = 1
-    word_ID["<bos>"] = 2
-    word_ID["<pad>"] = 4
+    word_id = {word: i for i, word in enumerate(known_words, 4)}
+    word_id["<unk>"] = 0
+    word_id["<eos>"] = 1
+    word_id["<bos>"] = 2
+    word_id["<pad>"] = 3
 
-    ID_word = dict(zip(word_ID.values(), word_ID.keys()))  # reverse dict to get word from ID
+    id_word = dict(zip(word_id.values(), word_id.keys()))  # reverse dict to get word from ID
 
     # write to pickle
-    write_pickle(ID_word, word_ID)
+    write_pickle(id_word, word_id)
 
     known_words.extend(["<eos>", "<bos>", "<pad>"])
 
@@ -68,9 +66,9 @@ def preprocess_data(read_file, write_file=None, vocab_size=20000, line_len=30):
         # exchanges words with ids and replaces words that are not in vocab with the id of unk
         for idx, word in enumerate(line):
             if word not in known_words:
-                line[idx] = word_ID['<unk>']
+                line[idx] = word_id['<unk>']
             else:
-                line[idx] = word_ID[word]
+                line[idx] = word_id[word]
 
         processed_lines.append(list(line))
 
@@ -85,10 +83,9 @@ def preprocess_data(read_file, write_file=None, vocab_size=20000, line_len=30):
     lines_np = np.array(processed_lines)
     return lines_np
 
-
 def preprocess_continuation(continuation_path='./data/sentences.continuation', sentence_lenght=20):
-    word_ID, ID_word = load_pickle()
-    vocab = list(word_ID.keys())
+    word_id, id_word = load_pickle()
+    vocab = list(word_id.keys())
 
     continuation = []
     with open(continuation_path, "r") as continuation_sentences:
@@ -99,19 +96,18 @@ def preprocess_continuation(continuation_path='./data/sentences.continuation', s
                 words.insert(0, '<eos>')
                 for idx, word in enumerate(words):
                     if word not in vocab:
-                        words[idx] = word_ID['<unk>']
+                        words[idx] = word_id['<unk>']
                     else:
-                        words[idx] = word_ID[word]
+                        words[idx] = word_id[word]
 
                 continuation.append(words)
     return np.array(continuation)
 
-
 # read data from preprocessed file written by preprocess_data
-def read_preprocessed_data(read_file):
+def read_preprocessed_data(read_file="./data/sentences.preprocess")
     lines = []
     read_file = open(read_file, 'r')
     for line in read_file:
-        lines += [line[:-1].split(' ')]
+        lines += [[int(word) for word in line[:-1].split(' ')]]
     read_file.close()
     return lines
