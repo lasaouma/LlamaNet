@@ -104,7 +104,7 @@ def preprocess_continuation(continuation_path='./data/sentences.continuation', s
     return np.array(continuation)
 
 # read data from preprocessed file written by preprocess_data
-def read_preprocessed_data(read_file="./data/sentences.preprocess")
+def read_preprocessed_data(read_file="./data/sentences.preprocess"):
     lines = []
     read_file = open(read_file, 'r')
     for line in read_file:
