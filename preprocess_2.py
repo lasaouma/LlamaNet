@@ -11,6 +11,14 @@ def write_pickle(ID_word, word_ID):
     with open("./vocab/IDWord.pkl", "wb") as f:
         pickle.dump(ID_word, f)
 
+def load_pickle():
+    with open('./vocab/IDWord.pkl', 'rb') as IDWord_file:
+        ID_word = pickle.load(IDWord_file)
+    with open('./vocab/WordID.pkl', 'rb') as WordID_file:
+        word_ID = pickle.load(WordID_file)
+
+    return word_ID, ID_word
+
 
 def preprocess_data(read_file, write_file=None, vocab_size=20000, line_len=30):
     # read lines and construct vocabulary
@@ -76,6 +84,27 @@ def preprocess_data(read_file, write_file=None, vocab_size=20000, line_len=30):
 
     lines_np = np.array(processed_lines)
     return lines_np
+
+
+def preprocess_continuation(continuation_path='./data/sentences.continuation', sentence_lenght=20):
+    word_ID, ID_word = load_pickle()
+    vocab = list(word_ID.keys())
+
+    continuation = []
+    with open(continuation_path, "r") as continuation_sentences:
+        for sentence in continuation_sentences:
+            words = sentence.strip().split(" ")
+
+            if len(words) < sentence_lenght:
+                words.insert(0, '<eos>')
+                for idx, word in enumerate(words):
+                    if word not in vocab:
+                        words[idx] = word_ID['<unk>']
+                    else:
+                        words[idx] = word_ID[word]
+
+                continuation.append(words)
+    return np.array(continuation)
 
 
 # read data from preprocessed file written by preprocess_data
