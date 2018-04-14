@@ -1,23 +1,41 @@
 import tensorflow as tf
 import numpy as np
+from preprocess import *
 
-#parameters
-vocab_size = 100
-time_steps = 10
+#load data and vocab
+data = load_preprocessed_data()
+vocab,inv_vocab = load_vocab()
+
+#hyperparameters
 hidden_size = 32
-batch_size = 64
+batch_size = 32
 learning_rate = 0.0001
+embedding_size = 16
+n_train_steps = 100000
+
+vocab_size = len(vocab)
+time_steps = len(data[0])
 input_n = time_steps
 output_n = vocab_size
-embedding_size = 16
-n_train_steps = 50000
 
 class Batcher: #TODO
     def __init__(self, data):
-        self.data = data
-    def get_batch(self):
-        #retrieve random x,y
-        return np.reshape([self.data]*batch_size, [batch_size, input_n]), np.reshape([self.data]*batch_size, [batch_size, input_n])
+        self.data = np.array(data)
+        self.data_size = len(data)
+        self.current_index = 0
+        self.shuffle()
+
+    def shuffle(self):
+        shuffle_indices = np.random.permutation(np.arange(self.data_size))
+        self.shuffled_data = self.data[shuffle_indices]
+
+    def get_batch(self, batch_size):
+        if self.current_index+batch_size >= self.data_size:
+            self.current_index = 0
+            self.shuffle()
+        batch_data = self.shuffled_data[self.current_index:self.current_index+batch_size]
+        self.current_index += batch_size
+        return batch_data
 
 #construct neural network #TODO seemingly doesn't work
 tf.reset_default_graph()
@@ -37,8 +55,8 @@ with tf.variable_scope("rnn"):
 
     rnn = tf.contrib.rnn.BasicLSTMCell(num_units=hidden_size)
     initial_state = state = tf.nn.rnn_cell.LSTMStateTuple(tf.zeros([batch_size, hidden_size]), tf.zeros([batch_size, hidden_size])) 
-    output_weights = tf.random_uniform([hidden_size, vocab_size], -1.0, 1.0)
-    output_bias = tf.random_uniform([vocab_size], -1.0, 1.0)
+    output_weights = tf.random_uniform([hidden_size, embedding_size], -1.0, 1.0)
+    output_bias = tf.random_uniform([embedding_size], -1.0, 1.0)
 
     output_list = []
     prediction_list = []
@@ -46,7 +64,9 @@ with tf.variable_scope("rnn"):
     for embedded_input in embedded_inputs_unstacked:
         _, state = rnn(embedded_input, state)
         output = tf.matmul(state.h, output_weights) + output_bias
-        output_list += [output]
+        output_decoded = tf.matmul(output, tf.transpose(embedding_weights))
+        output_list += [output_decoded]
+
         prediction_list += [tf.argmax(output,axis=1)]
     outputs = tf.stack(output_list, axis=1)
     predictions = tf.stack(prediction_list, axis=1)
@@ -65,27 +85,25 @@ def train(x, y):
 def predict(x):
     return sess.run(predictions, feed_dict={inputs: x})
 
+
+
 #DRIVER
-#generate dummy data and vocab
-data = [i % vocab_size for i in range(input_n)]
-vocab = dict()
-for i in range(vocab_size):
-    vocab[i] = str(i)
 
 batcher = Batcher(data)
 
 #train
 for i in range(n_train_steps):
-    x,y = batcher.get_batch()
+    x = y = batcher.get_batch(batch_size)
     l = train(x, y)
     if i % 1000 == 0:
         print("{:.1f}% loss={}".format(100*i/n_train_steps, l[0][0]))
-
-#logging
-writer = tf.summary.FileWriter("./log", sess.graph)
-writer.close()
 
 #test
 #predicted = predict(np.reshape([data]*batch_size, [batch_size, input_n]))
 #for i in range(input_n-1): 
 #    print(predicted[:,i], data[i+1])
+
+#logging
+writer = tf.summary.FileWriter("./log", sess.graph)
+writer.close()
+
