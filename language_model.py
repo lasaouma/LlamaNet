@@ -79,7 +79,7 @@ with tf.variable_scope("rnn"):
         output_decoded = tf.matmul(output, tf.transpose(embedding_weights))
         output_list += [output_decoded]
         prediction_list += [tf.argmax(output,axis=1)] #not required for training
-    outputs = tf.stack(output_list, axis=1)
+    outputs = tf.stack(output_list, axis=1) # (batch_size x time_steps x embedding_size
     predictions = tf.stack(prediction_list, axis=1) #not required for training
 
 with tf.variable_scope("optimizer"):
