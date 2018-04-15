@@ -28,7 +28,7 @@ sess = tf.Session()
 
 def predict(inp, inp_state):
     predict,out_state = sess.run([prediction,output_state], feed_dict={input_: inp, input_state: inp_state})
-    return inv_vocab(predict),out_state
+    return predict,out_state
 
 for sentence in sentences:
     i = 0
@@ -38,11 +38,11 @@ for sentence in sentences:
     for word in sentence:
         #predict word
         predicted_word, state_ = predict(word, state_)
-        output_sentence += [word]
+        output_sentence += [inv_vocab[word]]
         i += 1
     while i < n and predicted_word != "<eos>":
-        predicted_word = predict(predicted_word, state_)
-        output_sentence += [predicted_word]
+        predicted_word,state_ = predict(predicted_word, state_)
+        output_sentence += [inv_vocab[predicted_word]]
     output_sentences += [output_sentence]
 
 print(output_sentences)
