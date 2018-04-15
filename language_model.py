@@ -3,6 +3,7 @@ import numpy as np
 from preprocess import *
 from load_embeddings import *
 import datetime
+import os
 
 deembed = True
 use_word2vec = False #set to true for Experiment B
@@ -18,6 +19,8 @@ batch_size = 64
 learning_rate = 0.0001
 embedding_size = 100
 n_train_steps = 300
+number_checkpoint = 10
+checkpoint_time = 100
 
 vocab_size = len(vocab)
 time_steps = len(data[0])
@@ -123,13 +126,22 @@ with tf.variable_scope("optimizer"):
 #initialise graph
 sess = tf.Session()
 sess.run(tf.global_variables_initializer())
+global_step = 0
 
 #load word2vec
 if use_word2vec:
     load_embedding(sess, vocab, embedding_weights, "./wordembeddings-dim100.word2vec", embedding_size, vocab_size)
 
 #logging
-writer = tf.summary.FileWriter("./log/" + str(datetime.datetime.now().time()), sess.graph)
+log_dir = "./log/"+str(datetime.datetime.now().time())
+writer = tf.summary.FileWriter(log_dir+"/summary", sess.graph)
+
+#set up saving the  model
+model_dir = os.path.abspath(os.path.join(log_dir, "checkpoints"))
+model_prefix = os.path.join(model_dir, "model")
+if not os.path.exists(model_dir):
+    os.makedirs(model_dir)
+saver = tf.train.Saver(tf.global_variables(), max_to_keep=number_checkpoint)
 
 #perform training step and return loss
 def train(x, y, step):
@@ -146,11 +158,17 @@ batcher = Batcher(data)
 
 #train
 for i in range(n_train_steps):
+    global_step += 1
     x = y = batcher.get_batch(batch_size)
     l = train(x, y, i)
     if i % 1 == 0:
         print("{:.1f}% loss={}".format(100*i/n_train_steps, l))
+    if (i+1) % checkpoint_time == 0:
+        model_path = saver.save(sess, model_prefix, global_step=global_step)
+        print("Model saved to {}\n".format(model_path))
 
+model_path = saver.save(sess, model_prefix, global_step=global_step)
+print("Final model saved to {}\n".format(model_path))
 #test
 #predicted = predict(np.reshape([data]*batch_size, [batch_size, input_n]))
 #for i in range(input_n-1): 
