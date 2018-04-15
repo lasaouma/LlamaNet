@@ -85,7 +85,7 @@ def preprocess_data(read_file, write_file="sentences.preprocess", vocab_size=200
     lines_np = np.array(processed_lines)
     return lines_np
 
-def preprocess_continuation(continuation_path='./data/sentences.continuation', sentence_lenght=20):
+def load_continuation_data(continuation_path='./data/sentences.continuation', sentence_lenght=20):
     word_id, id_word = load_vocab()
     vocab = list(word_id.keys())
 
@@ -95,7 +95,6 @@ def preprocess_continuation(continuation_path='./data/sentences.continuation', s
             words = sentence.strip().split(" ")
 
             if len(words) < sentence_lenght:
-                words.insert(0, '<eos>')
                 for idx, word in enumerate(words):
                     if word not in vocab:
                         words[idx] = word_id['<unk>']

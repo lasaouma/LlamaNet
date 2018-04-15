@@ -5,7 +5,7 @@ from load_embeddings import *
 import datetime
 import os
 
-deembed = True
+deembed = False
 use_word2vec = False #set to true for Experiment B
 down_project = False #set to true for Experiment C
 
@@ -20,7 +20,7 @@ learning_rate = 0.0001
 embedding_size = 100
 n_train_steps = 300
 number_checkpoint = 10
-checkpoint_time = 100
+checkpoint_time = 20
 
 vocab_size = len(vocab)
 time_steps = len(data[0])
@@ -62,18 +62,16 @@ with tf.variable_scope("embeddings"):
         embedding_weights = tf.get_variable("embedding_weights", shape=[vocab_size, embedding_size], initializer=tf.contrib.layers.xavier_initializer(), trainable=False)
     else:
         embedding_weights = tf.get_variable("embedding_weights", shape=[vocab_size, embedding_size], initializer=tf.contrib.layers.xavier_initializer())
-    #transform inputs to one hot vectors
-    inputs_one_hot = tf.one_hot(inputs, vocab_size)
     #tensorflow function for embedding
     embedded_inputs = tf.nn.embedding_lookup(embedding_weights, inputs)
 
 with tf.variable_scope("rnn"):
     #lstm cell
     if down_project:
-        rnn = tf.contrib.rnn.BasicLSTMCell(num_units=hidden_size*2)
+        rnn = tf.contrib.rnn.BasicLSTMCell(num_units=hidden_size*2, name="lstm_cell")
         initial_state = state = tf.nn.rnn_cell.LSTMStateTuple(tf.zeros([batch_size, hidden_size*2]), tf.zeros([batch_size, hidden_size*2])) 
     else:
-        rnn = tf.contrib.rnn.BasicLSTMCell(num_units=hidden_size)
+        rnn = tf.contrib.rnn.BasicLSTMCell(num_units=hidden_size, name="lstm_cell")
         initial_state = state = tf.nn.rnn_cell.LSTMStateTuple(tf.zeros([batch_size, hidden_size]), tf.zeros([batch_size, hidden_size])) 
     #shared weights and bias for output layer
     if deembed:
@@ -141,7 +139,7 @@ model_dir = os.path.abspath(os.path.join(log_dir, "checkpoints"))
 model_prefix = os.path.join(model_dir, "model")
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
-saver = tf.train.Saver(tf.global_variables(), max_to_keep=number_checkpoint)
+saver = tf.train.Saver(tf.global_variables()) #, max_to_keep=number_checkpoint)
 
 #perform training step and return loss
 def train(x, y, step):
