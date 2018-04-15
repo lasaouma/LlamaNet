@@ -1,6 +1,9 @@
 import tensorflow as tf
 import numpy as np
 from preprocess import *
+import datetime
+
+deembed = True
 
 #load data and vocab
 data = load_preprocessed_data()
@@ -11,7 +14,7 @@ hidden_size = 512
 batch_size = 64
 learning_rate = 0.0001
 embedding_size = 100
-n_train_steps = 100
+n_train_steps = 300
 
 vocab_size = len(vocab)
 time_steps = len(data[0])
@@ -60,10 +63,14 @@ with tf.variable_scope("rnn"):
     rnn = tf.contrib.rnn.BasicLSTMCell(num_units=hidden_size)
     #state of lstm cell
     initial_state = state = tf.nn.rnn_cell.LSTMStateTuple(tf.zeros([batch_size, hidden_size]), tf.zeros([batch_size, hidden_size])) 
-    #shared weights and bias for output layer ("softmax")
-    output_weights = tf.get_variable("output_weights", shape=[hidden_size, embedding_size], initializer=tf.contrib.layers.xavier_initializer())
-    output_bias = tf.get_variable("output_bias", shape=[embedding_size], initializer=tf.contrib.layers.xavier_initializer())
-    
+    #shared weights and bias for output layer
+    if deembed:
+        output_weights = tf.get_variable("output_weights", shape=[hidden_size, embedding_size], initializer=tf.contrib.layers.xavier_initializer())
+        output_bias = tf.get_variable("output_bias", shape=[embedding_size], initializer=tf.contrib.layers.xavier_initializer())
+    else:
+        output_weights = tf.get_variable("output_weights", shape=[hidden_size, vocab_size], initializer=tf.contrib.layers.xavier_initializer())
+        output_bias = tf.get_variable("output_bias", shape=[vocab_size], initializer=tf.contrib.layers.xavier_initializer())
+
     #fancy way of interating over time_steps which is middle dimension of embedded_inputs (batch_size x time_steps x embedding_size)
     output_list = []
     prediction_list = [] #not required for training
@@ -71,11 +78,14 @@ with tf.variable_scope("rnn"):
     for embedded_input in embedded_inputs_unstacked:
         #calculate next state of rnn cell
         _, state = rnn(embedded_input, state)
-        #calculate output layer ("softmax")
+        #calculate output layer
         output = tf.matmul(state.h, output_weights) + output_bias
-        #"de-embed" softmax ???
-        output_decoded = tf.matmul(output, tf.transpose(embedding_weights))
-        output_list += [output_decoded]
+        #TODO "de-embed"???
+        if deembed:
+            output_decoded = tf.matmul(output, tf.transpose(embedding_weights))
+            output_list += [output_decoded]
+        else:
+            output_list += [output]
         prediction_list += [tf.argmax(output,axis=1)] #not required for training
     outputs = tf.stack(output_list, axis=1) # (batch_size x time_steps x embedding_size
     predictions = tf.stack(prediction_list, axis=1) #not required for training
@@ -98,7 +108,7 @@ with tf.variable_scope("optimizer"):
 sess = tf.Session()
 sess.run(tf.global_variables_initializer())
 #logging
-writer = tf.summary.FileWriter("./log", sess.graph)
+writer = tf.summary.FileWriter("./log/" + str(datetime.datetime.now().time()), sess.graph)
 
 #perform training step and return loss
 def train(x, y, step):
