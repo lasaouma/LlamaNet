@@ -1,9 +1,11 @@
 import tensorflow as tf
 import numpy as np
 from preprocess import *
+from load_embeddings import *
 import datetime
 
 deembed = True
+use_word2vec = True
 
 #load data and vocab
 data = load_preprocessed_data()
@@ -52,7 +54,10 @@ with tf.variable_scope("inputs"):
 #get embedding vectors
 with tf.variable_scope("embeddings"):
     #embedding weight matrix
-    embedding_weights = tf.get_variable("embedding_weights", shape=[vocab_size, embedding_size], initializer=tf.contrib.layers.xavier_initializer())
+    if use_word2vec: #non-trainable if using pretrained weights
+        embedding_weights = tf.get_variable("embedding_weights", shape=[vocab_size, embedding_size], initializer=tf.contrib.layers.xavier_initializer(), trainable=False)
+    else:
+        embedding_weights = tf.get_variable("embedding_weights", shape=[vocab_size, embedding_size], initializer=tf.contrib.layers.xavier_initializer())
     #transform inputs to one hot vectors
     inputs_one_hot = tf.one_hot(inputs, vocab_size)
     #tensorflow function for embedding
@@ -107,6 +112,11 @@ with tf.variable_scope("optimizer"):
 #initialise graph
 sess = tf.Session()
 sess.run(tf.global_variables_initializer())
+
+#load word2vec
+if use_word2vec:
+    load_embedding(sess, vocab, embedding_weights, "./wordembeddings-dim100.word2vec", embedding_size, vocab_size)
+
 #logging
 writer = tf.summary.FileWriter("./log/" + str(datetime.datetime.now().time()), sess.graph)
 
