@@ -1,6 +1,8 @@
 import pickle
 import numpy as np
 import os
+from tqdm import tqdm
+from pathos.multiprocessing import Pool, cpu_count
 
 def write_vocab(id_word, word_id):
     if not os.path.exists("./vocab"):
@@ -23,7 +25,9 @@ def preprocess_data(read_file, write_file="sentences.preprocess", vocab_size=200
     vocab = dict()
     lines = []
     read_file = open(read_file, 'r')
-    for line in read_file:
+
+    print('* Create vocabulary')
+    for line in tqdm(read_file):
         split_line = line[:-1].split(' ')
         for word in split_line:
             if word in vocab.keys():
@@ -59,8 +63,9 @@ def preprocess_data(read_file, write_file="sentences.preprocess", vocab_size=200
         if not os.path.exists("./data"):
             os.makedirs("./data")
         write_file = open("./data/" + write_file, 'w')
-
-    for line in lines:
+    
+    # Try to parallelize everything to make it at least more doable for the 20k case
+    def processLines(line):
         line.extend(['<pad>'] * ((line_len-2) - len(line)))
         line.insert(0, '<eos>')
         line.insert(len(line), '<bos>')
@@ -72,14 +77,19 @@ def preprocess_data(read_file, write_file="sentences.preprocess", vocab_size=200
             else:
                 line[idx] = word_id[word]
 
-        processed_lines.append(list(line))
+        return list(line)
 
-        if write_file is not None:
+    num_cores = cpu_count()
+
+    print('* Add tags, unks and pads. (In parallel using {} threads)'.format(num_cores))
+    pool = Pool(num_cores)
+    processed_lines = pool.map(processLines, lines) #TODO There has to be a way to track this shit, I tried with TQDM but it's been impossible
+
+    if write_file is not None:
+        for line in processed_lines:
             line_str1 = ' '.join(str(x) for x in line)
             line_str1 += '\n'
             write_file.write(line_str1)
-
-    if write_file is not None:
         write_file.close()
 
     lines_np = np.array(processed_lines)

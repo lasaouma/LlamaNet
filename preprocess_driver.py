@@ -2,7 +2,7 @@ import preprocess
 
 #head -n 50000 sentences.train > sentences.test
 
-preprocess.preprocess_data("sentences.test", vocab_size=5000)
+preprocess.preprocess_data("dataset/sentences.train", vocab_size=20000)
 
 vocab,inv_vocab = preprocess.load_vocab()
 data = preprocess.load_preprocessed_data()
