@@ -1,6 +1,7 @@
 finish basic implementation of language model			Xander
 implement perplexity measure					Nil
 implement word2vec (load and integration)
+implement network/weight saving
 know how to do: experiment 3 (dimensionaltiy reduction)
 know how to do: part 2						Xander
 know how to do: train network (model selection)			Xander

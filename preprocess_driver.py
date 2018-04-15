@@ -3,7 +3,7 @@ import preprocess
 #mkdir data
 #head -n 1000 sentences.train > sentences.test
 
-preprocess.preprocess_data("sentences.test", vocab_size=200)
+preprocess.preprocess_data("sentences.test", vocab_size=5000)
 
 vocab,inv_vocab = preprocess.load_vocab()
 data = preprocess.load_preprocessed_data()
