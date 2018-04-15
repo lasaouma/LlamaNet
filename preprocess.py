@@ -18,7 +18,7 @@ def load_vocab():
 
     return word_id, id_word
 
-def preprocess_data(read_file, write_file="./data/sentences.preprocess", vocab_size=20000, line_len=30):
+def preprocess_data(read_file, write_file="sentences.preprocess", vocab_size=20000, line_len=30):
     # read lines and construct vocabulary
     vocab = dict()
     lines = []
@@ -56,7 +56,9 @@ def preprocess_data(read_file, write_file="./data/sentences.preprocess", vocab_s
 
     processed_lines = []
     if write_file is not None:
-        write_file = open(write_file, 'w')
+        if not os.path.exists("./data"):
+            os.makedirs("./data")
+        write_file = open("./data/" + write_file, 'w')
 
     for line in lines:
         line.extend(['<pad>'] * ((line_len-2) - len(line)))
