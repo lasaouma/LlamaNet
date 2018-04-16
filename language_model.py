@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 from preprocess import *
 from load_embeddings import *
+from batcher import *
 import datetime
 import os
 
@@ -26,26 +27,6 @@ vocab_size = len(vocab)
 time_steps = len(data[0])
 input_n = time_steps
 output_n = vocab_size
-
-#batcher for getting shuffled training samples
-class Batcher:
-    def __init__(self, data):
-        self.data = np.array(data)
-        self.data_size = len(data)
-        self.current_index = 0
-        self.shuffle()
-
-    def shuffle(self):
-        shuffle_indices = np.random.permutation(np.arange(self.data_size))
-        self.shuffled_data = self.data[shuffle_indices]
-
-    def get_batch(self, batch_size):
-        if self.current_index+batch_size >= self.data_size:
-            self.current_index = 0
-            self.shuffle()
-        batch_data = self.shuffled_data[self.current_index:self.current_index+batch_size]
-        self.current_index += batch_size
-        return batch_data
 
 #CONSTRUCT NEURAL NETWORK
 tf.reset_default_graph()
