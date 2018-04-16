@@ -1,8 +1,7 @@
 import pickle
 import numpy as np
 import os
-from tqdm import tqdm
-from pathos.multiprocessing import Pool, cpu_count
+from multiprocessing import Pool, cpu_count
 
 def write_vocab(id_word, word_id):
     if not os.path.exists("./vocab"):
@@ -20,6 +19,21 @@ def load_vocab():
 
     return word_id, id_word
 
+
+def processLines(line, line_len, known_words, word_id):
+    """ Parallel processing lines function"""
+    line = ['<bos>'] + line
+    line += ['<eos>']
+    line += ['<pad>']*(line_len-len(line))
+    
+    # exchanges words with ids and replaces words that are not in vocab with the id of unk
+    for idx,word in enumerate(line):
+        if word not in known_words:
+            line[idx] = word_id['<unk>']
+        else:
+            line[idx] = word_id[word]
+    return list(line)
+
 def preprocess_data(read_file, write_file="sentences.preprocess", vocab_size=20000, line_len=30):
     # read lines and construct vocabulary
     vocab = dict()
@@ -27,7 +41,7 @@ def preprocess_data(read_file, write_file="sentences.preprocess", vocab_size=200
     read_file = open(read_file, 'r')
 
     print('* Create vocabulary')
-    for line in tqdm(read_file):
+    for line in read_file:
         split_line = line[:-1].split(' ')
         for word in split_line:
             if word in vocab.keys():
@@ -65,28 +79,14 @@ def preprocess_data(read_file, write_file="sentences.preprocess", vocab_size=200
         write_file = open("./data/" + write_file, 'w')
     
     # Try to parallelize everything to make it at least more doable for the 20k case
-    def processLines(line):
-        """ Parallel processing lines function"""
-        for line in lines:
-            line = ['<bos>'] + line
-            line += ['<eos>']
-            line += ['<pad>']*(line_len-len(line))
-        
-        # exchanges words with ids and replaces words that are not in vocab with the id of unk
-        for idx, word in enumerate(line):
-            if word not in known_words:
-                line[idx] = word_id['<unk>']
-            else:
-                line[idx] = word_id[word]
 
-        return list(line)
-
-    num_cores = cpu_count()
-
+    num_cores = cpu_count() if cpu_count() < 16 else 16
+    
     print('* Add tags, unks and pads. (In parallel using {} threads)'.format(num_cores))
+    print('...running (probably)', end='')
     pool = Pool(num_cores)
-    processed_lines = pool.map(processLines, lines) #TODO There has to be a way to track this shit, I tried with TQDM but it's been impossible
-
+    processed_lines = pool.starmap(processLines, [(line, line_len, known_words, word_id) for line in lines]) #TODO There has to be a way to track this shit, I tried with TQDM but it's been impossibl
+    print('  DONE!')
     if write_file is not None:
         for line in processed_lines:
             line_str1 = ' '.join(str(x) for x in line)
