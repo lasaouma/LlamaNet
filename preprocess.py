@@ -66,10 +66,12 @@ def preprocess_data(read_file, write_file="sentences.preprocess", vocab_size=200
     
     # Try to parallelize everything to make it at least more doable for the 20k case
     def processLines(line):
-        line.extend(['<pad>'] * ((line_len-2) - len(line)))
-        line.insert(0, '<eos>')
-        line.insert(len(line), '<bos>')
-
+        """ Parallel processing lines function"""
+        for line in lines:
+            line = ['<bos>'] + line
+            line += ['<eos>']
+            line += ['<pad>']*(line_len-len(line))
+        
         # exchanges words with ids and replaces words that are not in vocab with the id of unk
         for idx, word in enumerate(line):
             if word not in known_words:
