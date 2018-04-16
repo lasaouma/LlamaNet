@@ -61,9 +61,7 @@ def preprocess_data(read_file, write_file="sentences.preprocess", vocab_size=200
         write_file = open("./data/" + write_file, 'w')
 
     for line in lines:
-        line.extend(['<pad>'] * ((line_len-2) - len(line)))
-        line.insert(0, '<eos>')
-        line.insert(len(line), '<bos>')
+        line = ['<bos>'] + line
 
         # exchanges words with ids and replaces words that are not in vocab with the id of unk
         for idx, word in enumerate(line):
@@ -71,6 +69,9 @@ def preprocess_data(read_file, write_file="sentences.preprocess", vocab_size=200
                 line[idx] = word_id['<unk>']
             else:
                 line[idx] = word_id[word]
+        
+        line += ['<eos>']
+        line += ['<pad>'*(line_len-len(line))]
 
         processed_lines.append(list(line))
 
