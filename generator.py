@@ -1,8 +1,16 @@
 import tensorflow as tf
 import numpy as np
 from preprocess import *
+import argparse
 
-n=20 #generated sentence max length
+parser = argparse.ArgumentParser()
+parser.add_argument('--path', dest='checkpoint_path', type=str, default="/home/xan/zur/nlu/pro/LlamaNet/log/13:07:41.010577/checkpoints/model-20")
+parser.add_argument('--n', dest='n', type=int, default=20)
+parser.add_argument('--sample', dest='sample', action='store_true')
+args = parser.parse_args()
+n = args.n #generated sentence max length
+checkpoint_path = args.checkpoint_path
+sample = args.sample
 
 vocab,inv_vocab = load_vocab()
 data = load_continuation_data() #TODO should continuation data contain string words rather than int code words?
@@ -29,7 +37,7 @@ sess = tf.Session()
 
 #load weights
 saver = tf.train.Saver(var_list=[embedding_weights, output_weights, output_bias, rnn.trainable_variables[0], rnn.trainable_variables[1]])
-saver.restore(sess, "/home/xan/zur/nlu/pro/LlamaNet/log/13:07:41.010577/checkpoints/model-20") #TODO automatically locate
+saver.restore(sess, checkpoint_path) #TODO automatically locate
 
 def predict(input_word_, input_state_, sample=False):
     if not sample:
@@ -58,7 +66,7 @@ for sentence in data:
     #generate new words
     stop_word_predicts = {'<unk>': 0, '<bos>': 0, '<pad>': 0} #debug
     while i < n and predicted_word != vocab['<eos>']:
-        new_predicted_word, new_state = predict(predicted_word, state_, sample=True)
+        new_predicted_word, new_state = predict(predicted_word, state_, sample=sample)
         #only accept word if it is not stop word
         if new_predicted_word not in [vocab[stop_word] for stop_word in ['<unk>', '<bos>', '<pad>']]:
             predicted_word = new_predicted_word
