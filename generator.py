@@ -56,34 +56,41 @@ for sentence in data:
     #generate new words after sentence until <eos> is generated or sentence length reaches n
     i = 0 #current number of words in sentence
     output_sentence = []
-    state_ = np.zeros([hidden_size]) #initial state
-    _, state_ = predict(vocab['<bos>'], state_) #assume initial <bos> token
+    state = np.zeros([hidden_size]) #initial state
+    _, state = predict(vocab['<bos>'], state) #assume initial <bos> token
     #words in sentence
     for word in sentence:
-        predicted_word, state_ = predict(word, state_)
+        predicted_word, state = predict(word, state)
         output_sentence += [inv_vocab[word]]
         i += 1
     #generate new words
     stop_word_predicts = {'<unk>': 0, '<bos>': 0, '<pad>': 0} #debug
     while i < n and predicted_word != vocab['<eos>']:
-        new_predicted_word, new_state = predict(predicted_word, state_, sample=sample)
-        #only accept word if it is not stop word
-        if new_predicted_word not in [vocab[stop_word] for stop_word in ['<unk>', '<bos>', '<pad>']]:
+        new_predicted_word, new_state = predict(predicted_word, state, sample=sample)
+        if sample:
+            #only accept word if it is not stop word
+            if new_predicted_word not in [vocab[stop_word] for stop_word in ['<unk>', '<bos>', '<pad>']]:
+                predicted_word = new_predicted_word
+                state = new_state
+                output_sentence += [inv_vocab[predicted_word]]
+                i += 1
+            #else: #debug
+                #stop_word_predicts[inv_vocab[new_predicted_word]] += 1 #debug
+        else:
             predicted_word = new_predicted_word
-            state_ = new_state
+            state = new_state
             output_sentence += [inv_vocab[predicted_word]]
             i += 1
-        else: #debug
-            stop_word_predicts[inv_vocab[new_predicted_word]] += 1 #debug
     if output_sentence[-1] == '<eos>': #remove possible <eos> token at end
         output_sentence = output_sentence[:-1]
     output_sentences += [output_sentence]
 
     count += 1 #debug
-    if count % 100 == 0: #debug
+    if count % 20 == 0: #debug
         print_str = "" #debug
         for w in output_sentence: #debug
-            print_str += (w + " ") #debug
-        print(print_str + "(bad predictions=" + str(stop_word_predicts) + ")") #debug
+            print_str += (w + " ") #debug        
+        print(print_str) #+ "(bad predictions=" + str(stop_word_predicts) + ")") #debug
 
+#TODO store sentences to file
 print(output_sentences)
