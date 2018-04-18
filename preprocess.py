@@ -18,7 +18,7 @@ def load_vocab():
 
     return word_id, id_word
 
-def preprocess_data(read_file, write_file="sentences.preprocess", vocab_size=20000, line_len=30):
+def preprocess_data(read_file, write_file="sentences.train.preprocess", vocab_size=20000, line_len=30):
     # read lines and construct vocabulary
     vocab = dict()
     lines = []
@@ -36,18 +36,18 @@ def preprocess_data(read_file, write_file="sentences.preprocess", vocab_size=200
 
     # add most frequent words in vocabulary to known words
     known_words = []
-    for word in sorted(vocab, key=vocab.get, reverse=True):
+    for word in sorted(vocab, key=vocab.get, reverse=true):
         if len(known_words) < vocab_size - 4:
             known_words += [word]
 
-    # build dictonary of word to IDs
+    # build dictonary of word to ids
     word_id = {word: i for i, word in enumerate(known_words, 4)}
     word_id["<unk>"] = 0
     word_id["<eos>"] = 1
     word_id["<bos>"] = 2
     word_id["<pad>"] = 3
 
-    id_word = dict(zip(word_id.values(), word_id.keys()))  # reverse dict to get word from ID
+    id_word = dict(zip(word_id.values(), word_id.keys()))  # reverse dict to get word from id
 
     # write to pickle
     write_vocab(id_word, word_id)
@@ -73,6 +73,47 @@ def preprocess_data(read_file, write_file="sentences.preprocess", vocab_size=200
                 line[idx] = word_id[word]
         
 
+        processed_lines.append(list(line))
+
+        if write_file is not None:
+            line_str1 = ' '.join(str(x) for x in line)
+            line_str1 += '\n'
+            write_file.write(line_str1)
+
+    if write_file is not None:
+        write_file.close()
+
+    lines_np = np.array(processed_lines)
+    return lines_np
+
+def preprocess_eval_data(vocab, read_file, write_file="sentences.eval.preprocess", line_len=30):
+    # read lines
+    lines = []
+    read_file = open(read_file, 'r')
+    for line in read_file:
+        split_line = line[:-1].split(' ')
+        if len(split_line) <= line_len - 2:
+            lines += [split_line]
+    read_file.close()
+
+    processed_lines = []
+    if write_file is not None:
+        if not os.path.exists("./data"):
+            os.makedirs("./data")
+        write_file = open("./data/" + write_file, 'w')
+
+    for line in lines:
+        line = ['<bos>'] + line
+        line += ['<eos>']
+        line += ['<pad>']*(line_len-len(line))
+        
+        # exchanges words with ids and replaces words that are not in vocab with the id of unk
+        for idx, word in enumerate(line):
+            if word not in vocab.keys():
+                line[idx] = vocab['<unk>']
+            else:
+                line[idx] = vocab[word]
+        
         processed_lines.append(list(line))
 
         if write_file is not None:
