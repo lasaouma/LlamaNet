@@ -81,8 +81,6 @@ for sentence in data:
             state = new_state
             output_sentence += [inv_vocab[predicted_word]]
             i += 1
-    if output_sentence[-1] == '<eos>': #remove possible <eos> token at end
-        output_sentence = output_sentence[:-1]
     output_sentences += [output_sentence]
 
     count += 1 #debug

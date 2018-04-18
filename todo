@@ -1,7 +1,7 @@
-implement perplexity measure					Nil
-implement network/weight saving             Joseph
-know how to do: part 2						Xander
-know how to do: train network (model selection)			
-know how to do: use Leonard cluster for training		Nil
-understand language model					Lama
--how to do embeddings properly
+confirm correctness perplexity calculation: Lama
+language model: calculate perplexity for each sentence and write to file in correct format - Nil
+run experiments A,B,C and get 3 perplexity result files in correct format + model weights for experiment C (to use for generator) - Nil
+generator: confirm working, write to file in correct format, run with model weights from experiment C and get result file in correct format - Xander
+
+(make sure we are not missing anything...)
+HAND IN PROJECT
