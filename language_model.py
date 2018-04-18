@@ -11,17 +11,18 @@ use_word2vec = False #set to true for Experiment B
 down_project = False #set to true for Experiment C
 
 #load data and vocab
-data = load_preprocessed_data()
-vocab,inv_vocab = load_vocab()
+data = load_preprocessed_data("data/sentences.train.preprocess")
+test_data = load_preprocessed_data("data/sentences.test.preprocess")
+vocab,inv_vocab = load_vocab() # Same vocab for both
 
 #hyperparameters
 hidden_size = 512
 batch_size = 64
-learning_rate = 0.0001
+learning_rate = 1e-4 
 embedding_size = 100
-n_train_steps = 300
+n_train_steps = 500000
 number_checkpoint = 10
-checkpoint_time = 20
+checkpoint_time = 50
 
 vocab_size = len(vocab)
 time_steps = len(data[0])
@@ -62,6 +63,7 @@ with tf.variable_scope("rnn"):
     #fancy way of interating over time_steps which is middle dimension of embedded_inputs (batch_size x time_steps x embedding_size)
     output_list = []
     prediction_list = []
+    softmax_list = []
     embedded_inputs_unstacked = tf.unstack(embedded_inputs, axis=1)
 
     for embedded_input in embedded_inputs_unstacked:
@@ -104,8 +106,9 @@ if use_word2vec: #experiment B: load pretrained word2vec embedding weights
     load_embedding(sess, vocab, embedding_weights, "./wordembeddings-dim100.word2vec", embedding_size, vocab_size)
 
 #logging
-log_dir = "./log/"+str(datetime.datetime.now().time())
-writer = tf.summary.FileWriter(log_dir+"/summary", sess.graph)
+log_dir = "./log/"+datetime.datetime.now().strftime("%m%d_%H.%M")
+writer = tf.summary.FileWriter(log_dir+"/summary/train", sess.graph)
+test_writer = tf.summary.FileWriter(log_dir+"/summary/test", sess.graph)
 
 #set up saving the  model
 model_dir = os.path.abspath(os.path.join(log_dir, "checkpoints"))
@@ -124,16 +127,24 @@ def predict(x): #TODO not confirmed to work yet
     return sess.run(predictions, feed_dict={inputs: x})
 
 #DRIVER
-batcher = Batcher(data)
+train_data = data # TODO clean this thing
+
+batcher = Batcher(train_data)
+test_batch = Batcher(test_data)
 
 #train
 for step in range(n_train_steps):
     x = y = batcher.get_batch(batch_size)
     l = train(x, y, step)
+    
+    tx = ty = test_batch.get_batch(batch_size)
+    _, tlog = sess.run([loss, log_op], feed_dict={inputs: tx, targets: ty} )
+    test_writer.add_summary(tlog, step)
     if step % 1 == 0:
         print("{:.1f}% loss={}".format(100*step/n_train_steps, l))
     if (step+1) % checkpoint_time == 0:
         model_path = saver.save(sess, model_prefix, global_step=step)
+        
         print("Model saved to {}\n".format(model_path))
 
 model_path = saver.save(sess, model_prefix, global_step=n_train_steps-1)
@@ -141,4 +152,5 @@ print("Final model saved to {}\n".format(model_path))
 
 #logging
 writer.close()
+test_writer.close()
 
