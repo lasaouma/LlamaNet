@@ -8,7 +8,7 @@ vocab,inv_vocab = preprocess.load_vocab()
 data = preprocess.load_preprocessed_data()
 
 eval_data = preprocess.preprocess_eval_data(vocab, read_file="sentences.eval", write_file="data/sentences.eval.preprocess")
-eval_data_read = load_preprocessed_data(read_file="data/sentences.eval.preprocess")
+eval_data_read = preprocess.load_preprocessed_data(read_file="data/sentences.eval.preprocess")
 
 print("---preprocessed data---")
 print("eval file good: " + str(eval_data == eval_data_read))

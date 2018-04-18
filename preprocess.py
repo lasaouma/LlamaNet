@@ -56,9 +56,7 @@ def preprocess_data(read_file, write_file="sentences.train.preprocess", vocab_si
 
     processed_lines = []
     if write_file is not None:
-        if not os.path.exists("./data"):
-            os.makedirs("./data")
-        write_file = open("./data/" + write_file, 'w')
+        write_file = open(write_file, 'w')
 
     for line in lines:
         line = ['<bos>'] + line
@@ -97,10 +95,8 @@ def preprocess_eval_data(vocab, read_file, write_file="sentences.eval.preprocess
     read_file.close()
 
     processed_lines = []
-    if write_file is not None:
-        if not os.path.exists("./data"):
-            os.makedirs("./data")
-        write_file = open("./data/" + write_file, 'w')
+    if write_file is not None: # To be consistent with a single format, lets put the folder out
+        write_file = open(write_file, 'w')
 
     for line in lines:
         line = ['<bos>'] + line
