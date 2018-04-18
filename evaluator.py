@@ -7,11 +7,11 @@ import os
 
 #parse arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('--model', dest='checkpoint_path', type=str, default="/home/xan/zur/nlu/pro/LlamaNet/log/13:07:41.010577/checkpoints/model-20")
-parser.add_argument('--output', dest='results_path', type=str, default="results")
+parser.add_argument('--model', dest='checkpoint_path', type=str, default="./log/15:17:06.705800/checkpoints/model-10880")
+parser.add_argument('--experiment', dest='experiment', type=str, default="A")
 args = parser.parse_args()
 checkpoint_path = args.checkpoint_path
-results_path = args.results_path
+experiment = args.experiment
 
 #load data and vocab
 vocab,inv_vocab = load_vocab()
@@ -73,7 +73,10 @@ sess.run(tf.global_variables_initializer())
 saver = tf.train.Saver(var_list=[embedding_weights, output_weights, output_bias, rnn.trainable_variables[0], rnn.trainable_variables[1]])
 saver.restore(sess, checkpoint_path)
 
-results_file = open(results_path, 'w')
+if not os.path.exists("./results"):
+    os.makedirs("./results")
+
+results_file = open("./results/group08.perplexity" + experiment, 'w')
 
 written = 0
 for sentence in sentences:
@@ -82,7 +85,7 @@ for sentence in sentences:
    
     perplexity_score = perplexity(prediction[:end_index-1], sentence[1:end_index])
 
-    results_file.write(str(perplexity_score) + '\n')
+    results_file.write("{:.3f}\n".format(perplexity_score))
 
     if written % (len(sentences) / 10) == 0:
         print(perplexity_score)

@@ -5,13 +5,13 @@ import argparse
 import os
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--path', dest='checkpoint_path', type=str, default="/home/xan/zur/nlu/pro/LlamaNet/log/13:07:41.010577/checkpoints/model-20")
-parser.add_argument('--n', dest='n', type=int, default=20)
+parser.add_argument('--model', dest='checkpoint_path', type=str, default="./log/15:17:06.705800/checkpoints/model-10880")
 parser.add_argument('--sample', dest='sample', action='store_true')
 args = parser.parse_args()
-n = args.n #generated sentence max length
 checkpoint_path = args.checkpoint_path
 sample = args.sample
+
+n = 20 #generated sentence max length
 
 vocab,inv_vocab = load_vocab()
 data = load_continuation_data() #TODO should continuation data contain string words rather than int code words?
@@ -51,6 +51,10 @@ def predict(input_word_, input_state_, sample=False):
         predict = np.random.choice(range(vocab_size), p=softmax[0]) #random vocabulary index, weighted by softmax probabilities 
     return predict,out_state
 
+if not os.path.exists("./results"):
+  os.makedirs("./results")
+write_file = open("./results/group08.continuation", 'w')
+
 count = 0 #debug
 output_sentences = []
 for sentence in data:
@@ -82,23 +86,15 @@ for sentence in data:
             state = new_state
             output_sentence += [inv_vocab[predicted_word]]
             i += 1
-    output_sentences += [output_sentence]
 
+    #write sentence to file
+    write_str = ' '.join(str(word) for word in output_sentence)
+    write_str += '\n'
+    write_file.write(write_str)
+    
     count += 1 #debug
     if count % 20 == 0: #debug
         print_str = "" #debug
         for w in output_sentence: #debug
             print_str += (w + " ") #debug        
         print(print_str) #+ "(bad predictions=" + str(stop_word_predicts) + ")") #debug
-
-#TODO store sentences to file
-# if not os.path.exists("./results"):
-#     os.makedirs("./results")
-# write_file = open("./results/group08.continuation", 'w')
-#
-# for line in output_sentences:
-#     line_str1 = ' '.join(str(x) for x in line)
-#     line_str1 += '\n'
-#     write_file.write(line_str1)
-
-print(output_sentences)
