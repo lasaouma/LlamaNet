@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 from preprocess import *
 import argparse
+import os
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--path', dest='checkpoint_path', type=str, default="/home/xan/zur/nlu/pro/LlamaNet/log/13:07:41.010577/checkpoints/model-20")
@@ -91,4 +92,13 @@ for sentence in data:
         print(print_str) #+ "(bad predictions=" + str(stop_word_predicts) + ")") #debug
 
 #TODO store sentences to file
+# if not os.path.exists("./results"):
+#     os.makedirs("./results")
+# write_file = open("./results/group08.continuation", 'w')
+#
+# for line in output_sentences:
+#     line_str1 = ' '.join(str(x) for x in line)
+#     line_str1 += '\n'
+#     write_file.write(line_str1)
+
 print(output_sentences)
