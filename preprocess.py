@@ -82,7 +82,7 @@ def preprocess_data(read_file, write_file="sentences.train.preprocess", vocab_si
         write_file.close()
 
     lines_np = np.array(processed_lines)
-    return lines_np
+    return lines_np,word_id,id_word
 
 def preprocess_eval_data(vocab, read_file, write_file="sentences.eval.preprocess", line_len=30):
     # read lines
