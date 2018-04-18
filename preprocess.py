@@ -36,7 +36,7 @@ def preprocess_data(read_file, write_file="sentences.train.preprocess", vocab_si
 
     # add most frequent words in vocabulary to known words
     known_words = []
-    for word in sorted(vocab, key=vocab.get, reverse=true):
+    for word in sorted(vocab, key=vocab.get, reverse=True):
         if len(known_words) < vocab_size - 4:
             known_words += [word]
 

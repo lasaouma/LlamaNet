@@ -83,7 +83,7 @@ for sentence in sentences:
     prediction = sess.run(softmax, feed_dict={inputs:np.reshape(np.array(sentence), [1,-1])})[0]
     end_index = sentence.index(vocab['<eos>'])
    
-    perplexity_score = perplexity(prediction[:end_index-1], sentence[1:end_index])
+    perplexity_score = perplexity(prediction[:end_index], sentence[1:end_index+1])
 
     results_file.write("{:.3f}\n".format(perplexity_score))
 
