@@ -12,7 +12,6 @@ down_project = False #set to true for Experiment C
 
 #load data and vocab
 data = load_preprocessed_data("data/sentences.train.preprocess")
-test_data = load_preprocessed_data("data/sentences.test.preprocess")
 vocab,inv_vocab = load_vocab() # Same vocab for both
 
 #hyperparameters
@@ -78,11 +77,7 @@ with tf.variable_scope("rnn"):
             output = tf.matmul(state.h, output_weights) + output_bias
         output_list += [output]
 
-        #store prediction
-        prediction_list += [tf.argmax(output,axis=1)] #TODO take softmax before argmax???
-
     outputs = tf.stack(output_list, axis=1) # (batch_size x time_steps x embedding_size)
-    predictions = tf.stack(prediction_list, axis=1) # (batch size x time_steps)
 
 with tf.variable_scope("optimizer"):
     #calculate loss
@@ -108,7 +103,6 @@ if use_word2vec: #experiment B: load pretrained word2vec embedding weights
 #logging
 log_dir = "./log/"+datetime.datetime.now().strftime("%m%d_%H.%M")
 writer = tf.summary.FileWriter(log_dir+"/summary/train", sess.graph)
-test_writer = tf.summary.FileWriter(log_dir+"/summary/test", sess.graph)
 
 #set up saving the  model
 model_dir = os.path.abspath(os.path.join(log_dir, "checkpoints"))
@@ -123,23 +117,14 @@ def train(x, y, step):
     writer.add_summary(log, step) #add (step,loss) to summary for visualising loss 
     return l
 
-def predict(x): #TODO not confirmed to work yet
-    return sess.run(predictions, feed_dict={inputs: x})
-
 #DRIVER
-train_data = data # TODO clean this thing
-
-batcher = Batcher(train_data)
-test_batch = Batcher(test_data)
+batcher = Batcher(data)
 
 #train
 for step in range(n_train_steps):
     x = y = batcher.get_batch(batch_size)
     l = train(x, y, step)
     
-    tx = ty = test_batch.get_batch(batch_size)
-    _, tlog = sess.run([loss, log_op], feed_dict={inputs: tx, targets: ty} )
-    test_writer.add_summary(tlog, step)
     if step % 1 == 0:
         print("{:.1f}% loss={}".format(100*step/n_train_steps, l))
     if (step+1) % checkpoint_time == 0:
@@ -152,5 +137,4 @@ print("Final model saved to {}\n".format(model_path))
 
 #logging
 writer.close()
-test_writer.close()
 
