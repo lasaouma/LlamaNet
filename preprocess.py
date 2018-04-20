@@ -93,7 +93,7 @@ def preprocess_eval_data(vocab, read_file, write_file="./data/sentences.test.pre
         if len(split_line) <= line_len - 2:
             lines += [split_line]
         elif len(split_line) == line_len-1 and split_line[-1] == '': #handle case of final '' which apparently does not count as character in test data...
-            lines += [split_line]
+            lines += [split_line[:-1]]
     read_file.close()
 
     processed_lines = []
