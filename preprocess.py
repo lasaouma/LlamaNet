@@ -18,7 +18,7 @@ def load_vocab():
 
     return word_id, id_word
 
-def preprocess_data(read_file, write_file="data/sentences.train.preprocess", vocab_size=20000, line_len=30):
+def preprocess_data(read_file, write_file="./data/sentences.train.preprocess", vocab_size=20000, line_len=30):
     # read lines and construct vocabulary
     vocab = dict()
     lines = []

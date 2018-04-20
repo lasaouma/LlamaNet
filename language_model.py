@@ -88,7 +88,7 @@ with tf.variable_scope("rnn"):
 
 with tf.variable_scope("optimizer"):
     #calculate loss
-    loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=outputs[:,:-1,:], labels=targets[:,1:])) #TODO take sum instead of mean???
+    loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=outputs[:,:-1,:], labels=targets[:,1:]))
     #define optimizer
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
     #clip gradients
@@ -116,7 +116,7 @@ model_dir = os.path.abspath(os.path.join(log_dir, "checkpoints"))
 model_prefix = os.path.join(model_dir, "model" + experiment)
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
-saver = tf.train.Saver(tf.global_variables(), max_to_keep=number_checkpoint) #TODO does max to keep refer to first or last checkpoints?
+saver = tf.train.Saver(tf.global_variables(), max_to_keep=number_checkpoint)
 
 #perform training step and return loss
 def train(x, y, step):
