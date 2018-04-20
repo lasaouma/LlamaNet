@@ -57,7 +57,6 @@ with tf.variable_scope("rnn"):
 
     if down_project: #experiment C
         down_project_weights = tf.get_variable("down_project_weights", shape=[hidden_size*2, hidden_size], initializer=tf.contrib.layers.xavier_initializer())
-        down_project_bias = tf.get_variable("down_project_bias", shape=[hidden_size], initializer=tf.contrib.layers.xavier_initializer())
 
     #fancy way of interating over time_steps which is middle dimension of embedded_inputs (batch_size x time_steps x embedding_size)
     output_list = []
@@ -71,7 +70,7 @@ with tf.variable_scope("rnn"):
 
         #calculate output layer
         if down_project: #experiment C
-            down_projected = tf.matmul(state.h, down_project_weights) + down_project_bias
+            down_projected = tf.matmul(state.h, down_project_weights)
             output = tf.matmul(down_projected, output_weights) + output_bias
         else: #experiment A,B
             output = tf.matmul(state.h, output_weights) + output_bias

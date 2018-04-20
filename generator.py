@@ -5,8 +5,9 @@ import argparse
 import os
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--model', dest='checkpoint_path', type=str, default="./log/15:17:06.705800/checkpoints/model-10880")
+parser.add_argument('--model', dest='checkpoint_path', type=str)
 parser.add_argument('--sample', dest='sample', action='store_true')
+parser.add_argument('--data', dest=data_path, type=str, default="./data/sentences.continuation")
 args = parser.parse_args()
 checkpoint_path = args.checkpoint_path
 sample = args.sample
@@ -14,7 +15,7 @@ sample = args.sample
 n = 20 #generated sentence max length
 
 vocab,inv_vocab = load_vocab()
-data = load_continuation_data() #TODO should continuation data contain string words rather than int code words?
+data = load_continuation_data(data_path)
 
 hidden_size = 512
 vocab_size = len(vocab)
@@ -24,21 +25,23 @@ embedding_size = 100
 embedding_weights = tf.get_variable("embeddings/embedding_weights", shape=[vocab_size, embedding_size])
 output_weights = tf.get_variable("rnn/output_weights", shape=[hidden_size, vocab_size])
 output_bias = tf.get_variable("rnn/output_bias", shape=[vocab_size])
-rnn = tf.contrib.rnn.BasicLSTMCell(num_units=hidden_size, name="rnn/lstm_cell")
+rnn = tf.contrib.rnn.BasicLSTMCell(num_units=hidden_size*2, name="rnn/lstm_cell")
 input_word = tf.placeholder(shape=[], dtype=tf.int32, name="input_word")
 input_word_embedded = tf.reshape(tf.nn.embedding_lookup(embedding_weights, input_word), [1,-1])
-input_state = tf.placeholder(shape=[1,hidden_size], dtype=tf.float32, name="input_state")
+input_state = tf.placeholder(shape=[1,hidden_size*2], dtype=tf.float32, name="input_state")
 input_state_tuple = tf.nn.rnn_cell.LSTMStateTuple(input_state, input_state) #tuple necessary for TF LSTM
 _, output_state = rnn(input_word_embedded, input_state_tuple)
-output = tf.matmul(output_state.h, output_weights) + output_bias
+down_project_weights = tf.get_variable("rnn/down_project_weights", shape=[hidden_size*2, hidden_size], initializer=tf.contrib.layers.xavier_initializer())
+down_projected = tf.matmul(output_state.h, down_project_weights)
+output = tf.matmul(down_projected, output_weights) + output_bias
 output_softmax = tf.nn.softmax(output)
-prediction = tf.argmax(output_softmax,axis=1) #TODO softmax unnecessary if not sampling?
+prediction = tf.argmax(output_softmax,axis=1)
 
 sess = tf.Session()
 
 #load weights
-saver = tf.train.Saver(var_list=[embedding_weights, output_weights, output_bias, rnn.trainable_variables[0], rnn.trainable_variables[1]])
-saver.restore(sess, checkpoint_path) #TODO automatically locate
+saver = tf.train.Saver(var_list=[embedding_weights, output_weights, output_bias, down_project_weights, rnn.trainable_variables[0], rnn.trainable_variables[1]])
+saver.restore(sess, checkpoint_path)
 
 def predict(input_word_, input_state_, sample=False):
     if not sample:
@@ -61,7 +64,7 @@ for sentence in data:
     #generate new words after sentence until <eos> is generated or sentence length reaches n
     i = 0 #current number of words in sentence
     output_sentence = []
-    state = np.zeros([hidden_size]) #initial state
+    state = np.zeros([hidden_size*2]) #initial state
     _, state = predict(vocab['<bos>'], state) #assume initial <bos> token
     #words in sentence
     for word in sentence:

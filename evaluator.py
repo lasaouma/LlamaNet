@@ -7,15 +7,18 @@ import os
 
 #parse arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('--model', dest='checkpoint_path', type=str, default="./log/15:17:06.705800/checkpoints/model-10880")
+parser.add_argument('--model', dest='checkpoint_path', type=str)
 parser.add_argument('--experiment', dest='experiment', type=str, default="A")
+parser.add_argument('--data', dest='data_path', type=str, default="data/sentences.eval.preprocess")
 args = parser.parse_args()
 checkpoint_path = args.checkpoint_path
 experiment = args.experiment
 
+down_project = (experiment == "C")
+
 #load data and vocab
 vocab,inv_vocab = load_vocab()
-sentences = load_preprocessed_data("data/sentences.eval.preprocess")
+sentences = load_preprocessed_data(data_path)
 
 #hyperparameters
 hidden_size = 512
@@ -40,10 +43,15 @@ with tf.variable_scope("embeddings"):
     embedded_inputs = tf.nn.embedding_lookup(embedding_weights, inputs)
 
 with tf.variable_scope("rnn"):
+    if down_project:
     #lstm cell
-    rnn = tf.contrib.rnn.BasicLSTMCell(num_units=hidden_size, name="lstm_cell")
-    initial_state = state = tf.nn.rnn_cell.LSTMStateTuple(tf.zeros([batch_size, hidden_size]), tf.zeros([batch_size, hidden_size])) 
-   
+        down_project_weights = tf.get_variable("down_project_weights", shape=[hidden_size*2, hidden_size], name="down_project_weights")
+        rnn = tf.contrib.rnn.BasicLSTMCell(num_units=hidden_size*2, name="lstm_cell")
+        initial_state = state = tf.nn.rnn_cell.LSTMStateTuple(tf.zeros([batch_size, hidden_size*2]), tf.zeros([batch_size, hidden_size*2])) 
+    else:
+        rnn = tf.contrib.rnn.BasicLSTMCell(num_units=hidden_size, name="lstm_cell")
+        initial_state = state = tf.nn.rnn_cell.LSTMStateTuple(tf.zeros([batch_size, hidden_size]), tf.zeros([batch_size, hidden_size])) 
+
     #shared weights and bias for output layer
     output_weights = tf.get_variable("output_weights", shape=[hidden_size, vocab_size], initializer=tf.contrib.layers.xavier_initializer())
     output_bias = tf.get_variable("output_bias", shape=[vocab_size], initializer=tf.contrib.layers.xavier_initializer())
@@ -59,7 +67,11 @@ with tf.variable_scope("rnn"):
         _, state = rnn(embedded_input, state)
 
         #calculate output layer
-        output = tf.matmul(state.h, output_weights) + output_bias
+        if down_project:
+            down_projected = tf.matmul(state.h, down_project_weights)
+            output = tf.matmul(down_projected, output_weights) + output_bias
+        else:
+            output = tf.matmul(state.h, output_weights) + output_bias
         output_list += [output]
 
     outputs = tf.stack(output_list, axis=1) # (batch_size x time_steps x embedding_size)
@@ -70,7 +82,7 @@ sess = tf.Session()
 sess.run(tf.global_variables_initializer())
 
 #load weights
-saver = tf.train.Saver(var_list=[embedding_weights, output_weights, output_bias, rnn.trainable_variables[0], rnn.trainable_variables[1]])
+saver = tf.train.Saver(var_list=[embedding_weights, output_weights, output_bias, down_project_weights, rnn.trainable_variables[0], rnn.trainable_variables[1]])
 saver.restore(sess, checkpoint_path)
 
 if not os.path.exists("./results"):
