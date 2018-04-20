@@ -3,12 +3,19 @@ import numpy as np
 from preprocess import *
 from load_embeddings import *
 from batcher import *
+import argparse
 import datetime
 import os
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--experiment", dest="experiment", type=str, default="A")
+args = parser.parse_args()
+
+experiment = args.experiment
+
 #LOAD DATA AND SET PARAMETERS
-use_word2vec = False #set to true for Experiment B
-down_project = False #set to true for Experiment C
+use_word2vec = (experiment == "B") #set to true for Experiment B
+down_project = (experiment == "C") #set to true for Experiment C
 
 #load data and vocab
 data = load_preprocessed_data("data/sentences.train.preprocess")
@@ -105,7 +112,7 @@ writer = tf.summary.FileWriter(log_dir+"/summary/train", sess.graph)
 
 #set up saving the  model
 model_dir = os.path.abspath(os.path.join(log_dir, "checkpoints"))
-model_prefix = os.path.join(model_dir, "model")
+model_prefix = os.path.join(model_dir, "model" + experiment)
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
 saver = tf.train.Saver(tf.global_variables(), max_to_keep=number_checkpoint) #TODO does max to keep refer to first or last checkpoints?
