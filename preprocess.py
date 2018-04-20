@@ -2,6 +2,7 @@ import pickle
 import numpy as np
 import os
 
+#write vocabulary to file
 def write_vocab(id_word, word_id):
     if not os.path.exists("./vocab"):
         os.makedirs("./vocab")
@@ -10,6 +11,7 @@ def write_vocab(id_word, word_id):
     with open("./vocab/IDWord.pkl", "wb") as f:
         pickle.dump(id_word, f)
 
+#load vocabulary and inverse vocabulary from file
 def load_vocab():
     with open('./vocab/IDWord.pkl', 'rb') as IDWord_file:
         id_word = pickle.load(IDWord_file)
@@ -18,6 +20,7 @@ def load_vocab():
 
     return word_id, id_word
 
+#preprocess training data
 def preprocess_data(read_file, write_file="./data/sentences.train.preprocess", vocab_size=20000, line_len=30):
     # read lines and construct vocabulary
     vocab = dict()
@@ -84,6 +87,7 @@ def preprocess_data(read_file, write_file="./data/sentences.train.preprocess", v
     lines_np = np.array(processed_lines)
     return lines_np,word_id,id_word
 
+#preprocess test data
 def preprocess_eval_data(vocab, read_file, write_file="./data/sentences.test.preprocess", line_len=30):
     # read lines
     lines = []
@@ -125,6 +129,7 @@ def preprocess_eval_data(vocab, read_file, write_file="./data/sentences.test.pre
     lines_np = np.array(processed_lines)
     return lines_np
 
+#load data from continuation file into appropriate format
 def load_continuation_data(continuation_path='./data/sentences.continuation', sentence_lenght=20):
     word_id, id_word = load_vocab()
     vocab = list(word_id.keys())
@@ -144,7 +149,7 @@ def load_continuation_data(continuation_path='./data/sentences.continuation', se
                 continuation.append(words)
     return np.array(continuation)
 
-# read data from preprocessed file written by preprocess_data
+# read data from preprocessed file written by preprocess_data or preprocess_eval_data
 def load_preprocessed_data(read_file="./data/sentences.train.preprocess"):
     lines = []
     read_file = open(read_file, 'r')

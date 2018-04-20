@@ -21,7 +21,7 @@ down_project = (experiment == "C") #set to true for Experiment C
 
 #load data and vocab
 data = load_preprocessed_data("data/sentences.train.preprocess")
-vocab,inv_vocab = load_vocab() # Same vocab for both
+vocab,inv_vocab = load_vocab() 
 
 #hyperparameters
 hidden_size = 512
@@ -135,8 +135,7 @@ for step in range(n_train_steps):
     if step % 1 == 0:
         print("{:.1f}% loss={}".format(100*step/n_train_steps, l))
     if (step+1) % checkpoint_time == 0:
-        model_path = saver.save(sess, model_prefix, global_step=step)
-        
+        model_path = saver.save(sess, model_prefix, global_step=step) 
         print("Model saved to {}\n".format(model_path))
 
 model_path = saver.save(sess, model_prefix, global_step=n_train_steps-1)

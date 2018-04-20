@@ -11,7 +11,7 @@ parser.add_argument('--data', dest='data_path', type=str, default="./data/senten
 args = parser.parse_args()
 checkpoint_path = args.checkpoint_path
 data_path = args.data_path
-sample = args.sample
+sample = args.sample #sampling deactivated by default
 
 n = 20 #generated sentence max length
 
@@ -30,7 +30,7 @@ rnn = tf.contrib.rnn.BasicLSTMCell(num_units=hidden_size*2, name="rnn/lstm_cell"
 input_word = tf.placeholder(shape=[], dtype=tf.int32, name="input_word")
 input_word_embedded = tf.reshape(tf.nn.embedding_lookup(embedding_weights, input_word), [1,-1])
 input_state = tf.placeholder(shape=[1,hidden_size*2], dtype=tf.float32, name="input_state")
-input_state_tuple = tf.nn.rnn_cell.LSTMStateTuple(input_state, input_state) #tuple necessary for TF LSTM
+input_state_tuple = tf.nn.rnn_cell.LSTMStateTuple(input_state, input_state) #tuple necessary for tf lstm
 _, output_state = rnn(input_word_embedded, input_state_tuple)
 down_project_weights = tf.get_variable("rnn/down_project_weights", shape=[hidden_size*2, hidden_size], initializer=tf.contrib.layers.xavier_initializer())
 down_projected = tf.matmul(output_state.h, down_project_weights)
@@ -46,7 +46,7 @@ saver.restore(sess, checkpoint_path)
 
 def predict(input_word_, input_state_, sample=False):
     if not sample:
-        #word based on argmax (highest probability word)
+        #word based on argmax (highest probability word) [default]
         predict,out_state = sess.run([prediction,output_state.h], feed_dict={input_word: input_word_, input_state: np.reshape(input_state_,[1,-1])})
         predict = predict[0]
     else:
@@ -59,7 +59,6 @@ if not os.path.exists("./results"):
   os.makedirs("./results")
 write_file = open("./results/group08.continuation", 'w')
 
-count = 0 #debug
 output_sentences = []
 for sentence in data:
     #generate new words after sentence until <eos> is generated or sentence length reaches n
@@ -73,7 +72,6 @@ for sentence in data:
         output_sentence += [inv_vocab[word]]
         i += 1
     #generate new words
-    stop_word_predicts = {'<unk>': 0, '<bos>': 0, '<pad>': 0} #debug
     while i < n and predicted_word != vocab['<eos>']:
         new_predicted_word, new_state = predict(predicted_word, state, sample=sample)
         if sample:
@@ -83,8 +81,6 @@ for sentence in data:
                 state = new_state
                 output_sentence += [inv_vocab[predicted_word]]
                 i += 1
-            #else: #debug
-                #stop_word_predicts[inv_vocab[new_predicted_word]] += 1 #debug
         else:
             predicted_word = new_predicted_word
             state = new_state
@@ -95,10 +91,3 @@ for sentence in data:
     write_str = ' '.join(str(word) for word in output_sentence)
     write_str += '\n'
     write_file.write(write_str)
-    
-    count += 1 #debug
-    if count % 20 == 0: #debug
-        print_str = "" #debug
-        for w in output_sentence: #debug
-            print_str += (w + " ") #debug        
-        print(print_str) #+ "(bad predictions=" + str(stop_word_predicts) + ")") #debug

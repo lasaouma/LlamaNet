@@ -45,8 +45,8 @@ with tf.variable_scope("embeddings"):
     embedded_inputs = tf.nn.embedding_lookup(embedding_weights, inputs)
 
 with tf.variable_scope("rnn"):
-    if down_project:
     #lstm cell
+    if down_project:
         down_project_weights = tf.get_variable("down_project_weights", shape=[hidden_size*2, hidden_size])
         rnn = tf.contrib.rnn.BasicLSTMCell(num_units=hidden_size*2, name="lstm_cell")
         initial_state = state = tf.nn.rnn_cell.LSTMStateTuple(tf.zeros([batch_size, hidden_size*2]), tf.zeros([batch_size, hidden_size*2])) 
@@ -90,12 +90,12 @@ if down_project:
 saver = tf.train.Saver(var_list=var_list)
 saver.restore(sess, checkpoint_path)
 
+#write results
 if not os.path.exists("./results"):
     os.makedirs("./results")
 
 results_file = open("./results/group08.perplexity" + experiment, 'w')
 
-written = 0
 for sentence in sentences:
     prediction = sess.run(softmax, feed_dict={inputs:np.reshape(np.array(sentence), [1,-1])})[0]
     end_index = sentence.index(vocab['<eos>'])
@@ -103,10 +103,6 @@ for sentence in sentences:
     perplexity_score = perplexity(prediction[:end_index], sentence[1:end_index+1])
 
     results_file.write("{:.3f}\n".format(perplexity_score))
-
-    if written % (len(sentences) / 10) == 0:
-        print(perplexity_score)
-    written += 1
 
 results_file.close()
 

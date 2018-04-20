@@ -1,6 +1,0 @@
-language_model: run experiments A,B,C and get 3 perplexity result files in correct format + model weights for experiment C (to use for generator) - Nil
-generator: run experiment with model weights from experiment C and get result file in correct format - Xander
-
-(optimization of generator and evaluator (perplexity?)
-(make sure we are not missing anything...)
-HAND IN PROJECT
