@@ -9,7 +9,7 @@ import os
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', dest='checkpoint_path', type=str)
 parser.add_argument('--experiment', dest='experiment', type=str, default="A")
-parser.add_argument('--data', dest='data_path', type=str, default="data/sentences.eval.preprocess")
+parser.add_argument('--data', dest='data_path', type=str, default="data/sentences.test.preprocess")
 args = parser.parse_args()
 
 checkpoint_path = args.checkpoint_path
