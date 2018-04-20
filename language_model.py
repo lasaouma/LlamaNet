@@ -9,9 +9,11 @@ import os
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--experiment", dest="experiment", type=str, default="A")
+parser.add_argument("--learning_rate", dest="learning_rate", type=float, default=0.0001)
 args = parser.parse_args()
 
 experiment = args.experiment
+learning_rate = args.learning_rate
 
 #LOAD DATA AND SET PARAMETERS
 use_word2vec = (experiment == "B") #set to true for Experiment B
@@ -24,7 +26,6 @@ vocab,inv_vocab = load_vocab() # Same vocab for both
 #hyperparameters
 hidden_size = 512
 batch_size = 64
-learning_rate = 1e-4 
 embedding_size = 100
 n_train_steps = 500000
 number_checkpoint = 10

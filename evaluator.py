@@ -11,7 +11,9 @@ parser.add_argument('--model', dest='checkpoint_path', type=str)
 parser.add_argument('--experiment', dest='experiment', type=str, default="A")
 parser.add_argument('--data', dest='data_path', type=str, default="data/sentences.eval.preprocess")
 args = parser.parse_args()
+
 checkpoint_path = args.checkpoint_path
+data_path = args.data_path
 experiment = args.experiment
 
 down_project = (experiment == "C")
@@ -45,7 +47,7 @@ with tf.variable_scope("embeddings"):
 with tf.variable_scope("rnn"):
     if down_project:
     #lstm cell
-        down_project_weights = tf.get_variable("down_project_weights", shape=[hidden_size*2, hidden_size], name="down_project_weights")
+        down_project_weights = tf.get_variable("down_project_weights", shape=[hidden_size*2, hidden_size])
         rnn = tf.contrib.rnn.BasicLSTMCell(num_units=hidden_size*2, name="lstm_cell")
         initial_state = state = tf.nn.rnn_cell.LSTMStateTuple(tf.zeros([batch_size, hidden_size*2]), tf.zeros([batch_size, hidden_size*2])) 
     else:
@@ -82,7 +84,10 @@ sess = tf.Session()
 sess.run(tf.global_variables_initializer())
 
 #load weights
-saver = tf.train.Saver(var_list=[embedding_weights, output_weights, output_bias, down_project_weights, rnn.trainable_variables[0], rnn.trainable_variables[1]])
+var_list = [embedding_weights, output_weights, output_bias, rnn.trainable_variables[0], rnn.trainable_variables[1]]
+if down_project:
+    var_list += [down_project_weights]
+saver = tf.train.Saver(var_list=var_list)
 saver.restore(sess, checkpoint_path)
 
 if not os.path.exists("./results"):
