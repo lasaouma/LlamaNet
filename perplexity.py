@@ -10,10 +10,10 @@ base 2 exponent of the average of those cross entropies to obtain the perplexiti
 
 import numpy as np
 
-def crossEntropy(pred, target):
+def calculate_cross_entropy(pred, target):
     cross_entropy = -np.log2(pred[target])
     if cross_entropy == 'nan':
-        cross_entropy =1e30 # I guess it's esquivalent to puting 'inf'
+        cross_entropy =1e30 
     return cross_entropy
 
 def perplexity(sentence, target_sentence):
@@ -24,6 +24,6 @@ def perplexity(sentence, target_sentence):
     """
     exp = 0
     for i in range(len(sentence)):
-        exp += crossEntropy(sentence[i], target_sentence[i])
+        exp += calculate_cross_entropy(sentence[i], target_sentence[i])
     exp *= 1/len(sentence)
     return 2**exp

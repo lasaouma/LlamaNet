@@ -7,7 +7,7 @@ import os
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', dest='checkpoint_path', type=str)
 parser.add_argument('--sample', dest='sample', action='store_true')
-parser.add_argument('--data', dest=data_path, type=str, default="./data/sentences.continuation")
+parser.add_argument('--data', dest='data_path', type=str, default="./data/sentences.continuation")
 args = parser.parse_args()
 checkpoint_path = args.checkpoint_path
 data_path = args.data_path

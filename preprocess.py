@@ -18,7 +18,7 @@ def load_vocab():
 
     return word_id, id_word
 
-def preprocess_data(read_file, write_file="sentences.train.preprocess", vocab_size=20000, line_len=30):
+def preprocess_data(read_file, write_file="data/sentences.train.preprocess", vocab_size=20000, line_len=30):
     # read lines and construct vocabulary
     vocab = dict()
     lines = []
@@ -84,7 +84,7 @@ def preprocess_data(read_file, write_file="sentences.train.preprocess", vocab_si
     lines_np = np.array(processed_lines)
     return lines_np,word_id,id_word
 
-def preprocess_eval_data(vocab, read_file, write_file="sentences.eval.preprocess", line_len=30):
+def preprocess_eval_data(vocab, read_file, write_file="./data/sentences.test.preprocess", line_len=30):
     # read lines
     lines = []
     read_file = open(read_file, 'r')
@@ -143,7 +143,7 @@ def load_continuation_data(continuation_path='./data/sentences.continuation', se
     return np.array(continuation)
 
 # read data from preprocessed file written by preprocess_data
-def load_preprocessed_data(read_file="./data/sentences.preprocess"):
+def load_preprocessed_data(read_file="./data/sentences.train.preprocess"):
     lines = []
     read_file = open(read_file, 'r')
     for line in read_file:
